@@ -1,0 +1,5 @@
+---
+language: java
+before_script: unset GEM_PATH GEM_HOME RUBY_VERSION
+script: mvn install
+

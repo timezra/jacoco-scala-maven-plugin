@@ -1,4 +1,4 @@
-jruby-maven-plugin
+jacoco-scala-maven-plugin [![Build Status](https://travis-ci.org/timezra/jacoco-scala-maven-plugin.png)](https://travis-ci.org/timezra/jacoco-scala-maven-plugin)
 ==================
 
 A maven plugin for creating filtered JaCoCo code coverage reports for Scala.

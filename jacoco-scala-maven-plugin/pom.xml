@@ -1,0 +1,136 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>timezra.maven</groupId>
+    <artifactId>jacoco-scala-maven-plugin</artifactId>
+    <packaging>maven-plugin</packaging>
+    <version>0.6.3.1-SNAPSHOT</version>
+    <name>JaCoCo Scala Maven Plugin Aggregator</name>
+    <url>https://github.com/timezra/jacoco-scala-maven-plugin</url>
+
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>LICENSE</url>
+            <distribution>repo</distribution>
+            <comments>
+          The MIT License is a free software license originating
+              at the Massachusetts Institute of Technology (MIT), used
+              by the MIT X Consortium.
+        </comments>
+        </license>
+    </licenses>
+
+    <description>
+        The JaCoCo Scala Maven Plugin is a maven plugin for emitting code coverage reports for Scala. It is MIT licensed.
+    </description>
+
+    <organization>
+        <name>SolutionsIQ</name>
+        <url>http://www.solutionsiq.com/</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>timezra</id>
+            <name>Tim Myer</name>
+            <email>TMyer@SolutionsIQ.com</email>
+            <url>http://github.com/timezra</url>
+            <organization>SolutionsIQ</organization>
+            <organizationUrl>http://www.solutionsiq.com/</organizationUrl>
+            <roles>
+                <role>programmer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+    </developers>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.1</version>
+                <configuration>
+                    <source>1.7</source>
+                    <target>1.7</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-plugin-plugin</artifactId>
+                <version>3.2</version>
+                <configuration>
+                    <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>mojo-descriptor</id>
+                        <goals>
+                            <goal>descriptor</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>help-goal</id>
+                        <goals>
+                            <goal>helpmojo</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>2.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>2.9.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <show>public</show>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <version>0.6.3.201306030806</version>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>1.9.5</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+</project>

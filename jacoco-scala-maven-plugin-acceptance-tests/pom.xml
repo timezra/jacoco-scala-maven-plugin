@@ -1,0 +1,189 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>timezra.maven</groupId>
+    <artifactId>jacoco-scala-maven-plugin-acceptance-tests</artifactId>
+    <version>0.6.3.1-SNAPSHOT</version>
+    <name>JaCoCo Scala Maven Plugin Aggregator</name>
+    <url>https://github.com/timezra/jacoco-scala-maven-plugin</url>
+
+    <licenses>
+        <license>
+            <name>MIT</name>
+            <url>LICENSE</url>
+            <distribution>repo</distribution>
+            <comments>
+              The MIT License is a free software license originating
+                  at the Massachusetts Institute of Technology (MIT), used
+                  by the MIT X Consortium.
+            </comments>
+        </license>
+    </licenses>
+
+    <description>
+        The JaCoCo Scala Maven Plugin is a maven plugin for emitting code coverage reports for Scala. It is MIT licensed. These are its acceptance tests.
+    </description>
+
+    <organization>
+        <name>SolutionsIQ</name>
+        <url>http://www.solutionsiq.com/</url>
+    </organization>
+
+    <developers>
+        <developer>
+            <id>timezra</id>
+            <name>Tim Myer</name>
+            <email>TMyer@SolutionsIQ.com</email>
+            <url>http://github.com/timezra</url>
+            <organization>SolutionsIQ</organization>
+            <organizationUrl>http://www.solutionsiq.com/</organizationUrl>
+            <roles>
+                <role>programmer</role>
+            </roles>
+            <timezone>-8</timezone>
+        </developer>
+    </developers>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <gems-directory>${project.build.directory}/gems</gems-directory>
+        <jruby-version>1.7.4</jruby-version>
+        <cucumber-jvm-version>1.1.5</cucumber-jvm-version>
+        <local-repository>${project.build.directory}/local-repo</local-repository>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>timezra.maven</groupId>
+            <artifactId>jacoco-scala-maven-plugin</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>default-profile</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties>
+                <runCucumbers>true</runCucumbers>
+            </properties>
+        </profile>
+        <profile>
+            <id>skip-tests</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+                <property>
+                    <name>skipTests</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <runCucumbers>false</runCucumbers>
+            </properties>
+        </profile>
+        <profile>
+            <id>run-tests</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+                <property>
+                    <name>runCucumbers</name>
+                    <value>true</value>
+                </property>
+            </activation>
+
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/features</directory>
+                        <filtering>true</filtering>
+                    </testResource>
+                    <testResource>
+                        <directory>src/test/projects</directory>
+                        <filtering>false</filtering>
+                    </testResource>
+                </testResources>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-invoker-plugin</artifactId>
+                        <version>1.8</version>
+                        <configuration>
+                            <localRepositoryPath>${local-repository}</localRepositoryPath>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>prepare-dependent-plugins</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>install</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>timezra.maven</groupId>
+                        <artifactId>jruby-maven-plugin</artifactId>
+                        <version>${jruby-version}</version>
+                        <executions>
+                            <execution>
+                                <id>install-bundles</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>gem-install</goal>
+                                    <goal>bundle-install</goal>
+                                </goals>
+                                <configuration>
+                                    <gem_home>${gems-directory}</gem_home>
+                                    <gem>bundler</gem>
+                                    <gemfile>${project.basedir}/Gemfile</gemfile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>timezra.maven</groupId>
+                        <artifactId>cucumber-jvm-maven-plugin</artifactId>
+                        <version>${cucumber-jvm-version}</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.jruby</groupId>
+                                <artifactId>jruby-complete</artifactId>
+                                <version>${jruby-version}</version>
+                            </dependency>
+                        </dependencies>
+                        <executions>
+                            <execution>
+                                <id>run-cucumbers</id>
+                                <phase>integration-test</phase>
+                                <goals>
+                                    <goal>jruby</goal>
+                                </goals>
+                                <configuration>
+                                    <gem_home>${gems-directory}</gem_home>
+                                    <feature>${project.build.testOutputDirectory}</feature>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>tims-repo</id>
+            <url>http://timezra.github.com/maven/releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
+</project>
+
+
