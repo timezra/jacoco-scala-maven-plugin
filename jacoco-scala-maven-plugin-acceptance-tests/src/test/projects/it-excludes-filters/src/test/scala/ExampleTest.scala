@@ -21,7 +21,7 @@
  */
 import org.junit.Test
 
-class GreetingTest {
+class ExampleTest {
 
   @Test
   def test() {

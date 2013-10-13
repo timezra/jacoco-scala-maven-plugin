@@ -13,8 +13,8 @@ Feature: Showcase the jacoco-scala-maven-plugin integration
     When I verify it
     Then mixed-in trait methods should not be in the coverage report
 
-  Scenario: Includes Mixins
-    Given a scala project '${project.build.testOutputDirectory}/it-includes-mixins' without mixins filtered
+  Scenario: Excludes Filters
+    Given a scala project '${project.build.testOutputDirectory}/it-excludes-filters' without mixins filtered
     When I verify it
     Then mixed-in trait methods should be in the coverage report
 

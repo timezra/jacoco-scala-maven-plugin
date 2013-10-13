@@ -270,8 +270,8 @@ public class ReportMojo extends AbstractMavenReport {
 
     private BundleCreator createBundleCreator() {
         final FileFilter fileFilter = new FileFilter(getIncludes(), getExcludes());
-        return filters.contains("SCALAC.MIXIN") ? new SanitizingBundleCreator(getProject(), fileFilter) : new BundleCreator(
-                getProject(), fileFilter);
+        return filters != null && filters.contains("SCALAC.MIXIN") ? new SanitizingBundleCreator(getProject(), fileFilter)
+                : new BundleCreator(getProject(), fileFilter);
     }
 
     private void createReport(final IReportGroupVisitor visitor) throws IOException {
