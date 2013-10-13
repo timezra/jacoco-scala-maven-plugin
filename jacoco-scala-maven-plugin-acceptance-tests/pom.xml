@@ -4,7 +4,7 @@
     <groupId>timezra.maven</groupId>
     <artifactId>jacoco-scala-maven-plugin-acceptance-tests</artifactId>
     <version>0.6.3.1-SNAPSHOT</version>
-    <name>JaCoCo Scala Maven Plugin Aggregator</name>
+    <name>JaCoCo Scala Maven Plugin Acceptance Tests</name>
     <url>https://github.com/timezra/jacoco-scala-maven-plugin</url>
 
     <licenses>
