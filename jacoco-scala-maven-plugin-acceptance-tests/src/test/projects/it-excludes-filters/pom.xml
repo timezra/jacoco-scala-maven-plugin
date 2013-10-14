@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>timezra.maven</groupId>
     <artifactId>it-excludes-filters</artifactId>
-    <version>0.6.3.1-SNAPSHOT</version>
+    <version>0.6.3.1</version>
 
     <dependencies>
         <dependency>

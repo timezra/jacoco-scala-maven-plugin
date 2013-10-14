@@ -26,8 +26,9 @@ Usage
 ----------------------------------------------------
 Work in progress....
 
-Used the same way as org.jacoco:jacoco-maven-plugin:report, except you can can specify optional filters
-For now, please use 'mvn timezra.maven:jacoco-scala-maven-plugin:0.6.3:help' to find out usage information.
+Used the same way as org.jacoco:jacoco-maven-plugin:report, except you can can specify scala-specific optional filters defined here: https://github.com/jacoco/jacoco/wiki/FilteringOptions
+Currently SCALAC.MIXIN and SCALAC.CASE are supported.
+For now, please use 'mvn timezra.maven:jacoco-scala-maven-plugin:0.6.3.1:help' to find out usage information.
 
 ### Examples: ###
 
@@ -48,7 +49,7 @@ For now, please use 'mvn timezra.maven:jacoco-scala-maven-plugin:0.6.3:help' to 
 &nbsp;&nbsp;&nbsp;&nbsp;&lt;plugin&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;groupId&gt;timezra.maven&lt;/groupId&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;artifactId&gt;jacoco-scala-maven-plugin&lt;/artifactId&gt;  
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;version&gt;0.6.3&lt;/version&gt;  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;version&gt;0.6.3.1&lt;/version&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;executions&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;execution&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;id&gt;post-integration-test&lt;/id&gt;  
@@ -59,6 +60,7 @@ For now, please use 'mvn timezra.maven:jacoco-scala-maven-plugin:0.6.3:help' to 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;configuration&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;filters&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;filter&gt;SCALAC.MIXIN&lt;/filter&gt;  
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;filter&gt;SCALAC.CASE&lt;/filter&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/filters&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/configuration&gt;  
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;/execution&gt;  
