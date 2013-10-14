@@ -69,6 +69,9 @@ import org.objectweb.asm.Opcodes;
  */
 public class ReportMojo extends AbstractMavenReport {
 
+    private static final String FILTER_SCALAC_MIXIN = "SCALAC.MIXIN";
+    private static final String FILTER_SCALAC_CASE = "SCALAC.CASE";
+
     /**
      * Output directory for the reports. Note that this parameter is only relevant if the goal is run from the command line
      * or from the default build lifecycle. If the goal is run indirectly as part of a site generation, the output directory
@@ -270,8 +273,19 @@ public class ReportMojo extends AbstractMavenReport {
 
     private BundleCreator createBundleCreator() {
         final FileFilter fileFilter = new FileFilter(getIncludes(), getExcludes());
-        return filters != null && filters.contains("SCALAC.MIXIN") ? new SanitizingBundleCreator(getProject(), fileFilter)
-                : new BundleCreator(getProject(), fileFilter);
+        if (filters != null) {
+            final Collection<MethodCoverageFilter> methodCoverageFilters = new ArrayList<>();
+            if (filters.contains(FILTER_SCALAC_MIXIN)) {
+                methodCoverageFilters.add(new MixinFilter());
+            }
+            if (filters.contains(FILTER_SCALAC_CASE)) {
+                methodCoverageFilters.add(new CaseFilter());
+            }
+            if (!filters.isEmpty()) {
+                return new SanitizingBundleCreator(getProject(), fileFilter, new Filters(methodCoverageFilters));
+            }
+        }
+        return new BundleCreator(getProject(), fileFilter);
     }
 
     private void createReport(final IReportGroupVisitor visitor) throws IOException {
@@ -360,13 +374,17 @@ public class ReportMojo extends AbstractMavenReport {
     }
 
     private static final class SanitizingBundleCreator extends BundleCreator {
-        public SanitizingBundleCreator(final MavenProject project, final FileFilter fileFilter) {
+        private final MethodCoverageFilter filter;
+
+        public SanitizingBundleCreator(final MavenProject project, final FileFilter fileFilter,
+                final MethodCoverageFilter filter) {
             super(project, fileFilter);
+            this.filter = filter;
         }
 
         @Override
         protected Analyzer createAnalyzer(final ExecutionDataStore executionDataStore, final ICoverageVisitor coverageVisitor) {
-            return new SanitizingAnalyzer(executionDataStore, coverageVisitor);
+            return new SanitizingAnalyzer(executionDataStore, coverageVisitor, filter);
         }
     }
 
@@ -374,11 +392,14 @@ public class ReportMojo extends AbstractMavenReport {
 
         private final ExecutionDataStore executionData;
         private final ICoverageVisitor coverageVisitor;
+        private final MethodCoverageFilter filter;
 
-        public SanitizingAnalyzer(final ExecutionDataStore executionData, final ICoverageVisitor coverageVisitor) {
+        public SanitizingAnalyzer(final ExecutionDataStore executionData, final ICoverageVisitor coverageVisitor,
+                final MethodCoverageFilter filter) {
             super(executionData, coverageVisitor);
             this.executionData = executionData;
             this.coverageVisitor = coverageVisitor;
+            this.filter = filter;
         }
 
         @Override
@@ -391,8 +412,70 @@ public class ReportMojo extends AbstractMavenReport {
             final ExecutionData data = executionData.get(classid);
             final boolean[] probes = data == null ? null : data.getProbes();
             final StringPool stringPool = new StringPool();
-            final ClassProbesVisitor analyzer = new SanitizingClassAnalyzer(classid, probes, stringPool, coverageVisitor);
+            final ClassProbesVisitor analyzer = new SanitizingClassAnalyzer(classid, probes, stringPool, coverageVisitor,
+                    filter);
             return new ClassProbesAdapter(analyzer);
+        }
+    }
+
+    private static interface MethodCoverageFilter {
+        Collection<IMethodCoverage> filter(final Collection<IMethodCoverage> methodCoverages);
+    }
+
+    private static final class Filters implements MethodCoverageFilter {
+
+        private final Iterable<MethodCoverageFilter> filters;
+
+        Filters(final Iterable<MethodCoverageFilter> filters) {
+            this.filters = filters;
+        }
+
+        @Override
+        public Collection<IMethodCoverage> filter(final Collection<IMethodCoverage> methodCoverages) {
+            Collection<IMethodCoverage> filtered = methodCoverages;
+            for (final MethodCoverageFilter filter : filters) {
+                filtered = filter.filter(filtered);
+            }
+            return filtered;
+        }
+    }
+
+    private static final class MixinFilter implements MethodCoverageFilter {
+        @Override
+        public Collection<IMethodCoverage> filter(final Collection<IMethodCoverage> methodCoverages) {
+            final Collection<IMethodCoverage> filtered = new ArrayList<>();
+            final Collection<Integer> constructorLines = new HashSet<Integer>();
+            for (final IMethodCoverage methodCoverage : methodCoverages) {
+                if (isConstructor(methodCoverage)) {
+                    constructorLines.add(Integer.valueOf(methodCoverage.getFirstLine()));
+                }
+            }
+            for (final IMethodCoverage methodCoverage : methodCoverages) {
+                if (isConstructor(methodCoverage)
+                        || !constructorLines.contains(Integer.valueOf(methodCoverage.getFirstLine()))) {
+                    filtered.add(methodCoverage);
+                }
+            }
+            return filtered;
+        }
+
+        private boolean isConstructor(final IMethodCoverage methodCoverage) {
+            return "<init>".equals(methodCoverage.getName());
+        }
+    }
+
+    private static final class CaseFilter implements MethodCoverageFilter {
+        @Override
+        public Collection<IMethodCoverage> filter(final Collection<IMethodCoverage> methodCoverages) {
+            final Collection<IMethodCoverage> filtered = new ArrayList<>();
+            for (final IMethodCoverage methodCoverage : methodCoverages) {
+                final String methodSignature = methodCoverage.getName() + methodCoverage.getDesc();
+                if (!(methodSignature.startsWith("curried()") || methodSignature.startsWith("tupled()") || methodSignature
+                        .matches("(?:\\w|\\$)+\\$default\\$\\d+\\(\\).*"))) {
+                    filtered.add(methodCoverage);
+                }
+            }
+            return filtered;
         }
     }
 
@@ -401,13 +484,15 @@ public class ReportMojo extends AbstractMavenReport {
         private final boolean[] probes;
         private final Collection<IMethodCoverage> methodCoveragesToAdd = new ArrayList<IMethodCoverage>();
         private final ICoverageVisitor coverageVisitor;
+        private final MethodCoverageFilter filter;
 
         private SanitizingClassAnalyzer(final long classid, final boolean[] probes, final StringPool stringPool,
-                final ICoverageVisitor coverageVisitor) {
+                final ICoverageVisitor coverageVisitor, final MethodCoverageFilter filter) {
             super(classid, probes, stringPool);
             this.stringPool = stringPool;
             this.probes = probes;
             this.coverageVisitor = coverageVisitor;
+            this.filter = filter;
         }
 
         @Override
@@ -445,23 +530,10 @@ public class ReportMojo extends AbstractMavenReport {
             }
         }
 
-        private boolean isConstructor(final IMethodCoverage methodCoverage) {
-            return "<init>".equals(methodCoverage.getName());
-        }
-
         private void visitSanitizedMethods() {
-
-            final Collection<Integer> constructorLines = new HashSet<Integer>();
-            for (final IMethodCoverage methodCoverage : methodCoveragesToAdd) {
-                if (isConstructor(methodCoverage)) {
-                    constructorLines.add(Integer.valueOf(methodCoverage.getFirstLine()));
-                }
-            }
-            for (final IMethodCoverage methodCoverage : methodCoveragesToAdd) {
-                if (!constructorLines.contains(Integer.valueOf(methodCoverage.getFirstLine()))
-                        || isConstructor(methodCoverage)) {
-                    getCoverage().addMethod(methodCoverage);
-                }
+            final Collection<IMethodCoverage> filtered = filter.filter(methodCoveragesToAdd);
+            for (final IMethodCoverage methodCoverage : filtered) {
+                getCoverage().addMethod(methodCoverage);
             }
         }
     }

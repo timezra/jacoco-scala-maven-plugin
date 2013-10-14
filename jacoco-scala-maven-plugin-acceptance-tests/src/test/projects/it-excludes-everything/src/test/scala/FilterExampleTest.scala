@@ -19,8 +19,17 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-class Example extends ExampleTrait {
-  def sayHello() {
-    println("Hello world")
+import org.junit.Test
+
+class FilterExampleTest {
+
+  @Test
+  def traitTest() {
+    new TraitExample().sayHello
+  }
+  
+  @Test
+  def caseTest() {
+    new CaseExample().sayHello
   }
 }

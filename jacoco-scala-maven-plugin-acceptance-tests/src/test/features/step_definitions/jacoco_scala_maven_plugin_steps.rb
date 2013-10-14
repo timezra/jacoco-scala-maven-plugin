@@ -8,7 +8,7 @@ Given /^a local repository '(.*)'$/ do |repo|
   @repo = repo
 end
 
-Given /^a scala project '(.*)' (?:with|without) mixins filtered$/ do |project|
+Given /^a scala project '(.*)'(?: with.*filter.*)?$/ do |project|
   @project = project
 end
 
@@ -18,9 +18,16 @@ When /^I (.*) it$/ do |goal|
   end
 end
 
-Then /^mixed-in trait methods (should|should not) be in the coverage report$/ do |should_or_should_not|
-  report = IO.read("#{@project}/target/site/jacoco/default/Example.html")
+Then /^mixed-in methods (should|should not) be in the coverage report$/ do |should_or_should_not|
+  report = IO.read("#{@project}/target/site/jacoco/default/TraitExample.html")
   report.send _(should_or_should_not), match(/class\="el_method">thisIsMixedIn\(\)/)
+end
+
+Then /^case methods (should|should not) be in the coverage report$/ do |should_or_should_not|
+  report = IO.read("#{@project}/target/site/jacoco/default/CaseExample.html")
+  report.send _(should_or_should_not), match(/class\="el_method">tupled\(\)/)
+  report.send _(should_or_should_not), match(/class\="el_method">curried\(\)/)
+  report.send _(should_or_should_not), match(/class\="el_method">(?:\w|\$)+\$default\$\d+\(\)/)
 end
 
 def mvn (goal, params = {})

@@ -11,13 +11,25 @@ Feature: Showcase the jacoco-scala-maven-plugin integration
   Scenario: Excludes Mixins
     Given a scala project '${project.build.testOutputDirectory}/it-excludes-mixins' with mixins filtered
     When I verify it
-    Then mixed-in trait methods should not be in the coverage report
+    Then mixed-in methods should not be in the coverage report
+
+  Scenario: Excludes Case Methods
+    Given a scala project '${project.build.testOutputDirectory}/it-excludes-case-methods' with case methods filtered
+    When I verify it
+    Then case methods should not be in the coverage report
 
   Scenario: Excludes Filters
-    Given a scala project '${project.build.testOutputDirectory}/it-excludes-filters' without mixins filtered
+    Given a scala project '${project.build.testOutputDirectory}/it-excludes-filters' without filters
     When I verify it
-    Then mixed-in trait methods should be in the coverage report
+    Then mixed-in methods should be in the coverage report
+    And case methods should be in the coverage report
 
+  Scenario: Excludes Everything
+    Given a scala project '${project.build.testOutputDirectory}/it-excludes-everything' with everything filtered
+    When I verify it
+    Then mixed-in methods should not be in the coverage report
+    And case methods should not be in the coverage report
+    
 # ##############################################################################
 # Copyright (c) 2013 timezra
 # 

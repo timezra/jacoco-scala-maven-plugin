@@ -21,10 +21,10 @@
  */
 import org.junit.Test
 
-class ExampleTest {
+class TraitExampleTest {
 
   @Test
   def test() {
-    new Example().sayHello
+    new TraitExample().sayHello
   }
 }
