@@ -4,7 +4,7 @@
     <groupId>timezra.maven</groupId>
     <artifactId>jacoco-scala-maven-plugin-aggregator</artifactId>
     <packaging>pom</packaging>
-    <version>0.6.3.1</version>
+    <version>0.6.3.2-SNAPSHOT</version>
     <name>JaCoCo Scala Maven Plugin Aggregator</name>
     <url>https://github.com/timezra/jacoco-scala-maven-plugin</url>
 
