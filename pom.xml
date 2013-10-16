@@ -52,6 +52,7 @@
     <modules>
         <module>jacoco-scala-maven-plugin</module>
         <module>jacoco-scala-maven-plugin-acceptance-tests</module>
+        <module>jacoco-scalatest-maven-plugin-example</module>
     </modules>
 
 </project>
