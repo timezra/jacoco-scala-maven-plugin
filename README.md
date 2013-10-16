@@ -1,7 +1,7 @@
 jacoco-scala-maven-plugin [![Build Status](https://travis-ci.org/timezra/jacoco-scala-maven-plugin.png)](https://travis-ci.org/timezra/jacoco-scala-maven-plugin)
 ==================
 
-A maven plugin for creating filtered JaCoCo code coverage reports for Scala.
+A maven plugin for creating filtered JaCoCo code coverage reports for Scala. Please read the companion blog entry (http://timezra.blogspot.com/2013/10/jacoco-and-scala.html) for more information on how to use this plug-in.
 
 Configuration
 ----------------------------------------------------

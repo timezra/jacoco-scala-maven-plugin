@@ -91,12 +91,25 @@
                             <goal>prepare-agent</goal>
                         </goals>
                     </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>timezra.maven</groupId>
+                <artifactId>jacoco-scala-maven-plugin</artifactId>
+                <version>0.6.3.1</version>
+                <executions>
                     <execution>
                         <id>post-integration-test</id>
                         <phase>post-integration-test</phase>
                         <goals>
                             <goal>report</goal>
                         </goals>
+                        <configuration>
+                            <filters>
+                                <filter>SCALAC.CASE</filter>
+                                <filter>SCALAC.MIXIN</filter>
+                            </filters>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -128,4 +141,16 @@
             </plugin>
         </plugins>
     </build>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>tims-repo</id>
+            <url>http://timezra.github.com/maven/releases</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </pluginRepository>
+    </pluginRepositories>
 </project>
