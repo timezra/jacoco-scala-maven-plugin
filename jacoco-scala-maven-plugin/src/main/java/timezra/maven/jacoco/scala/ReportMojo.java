@@ -34,7 +34,6 @@ import org.jacoco.core.analysis.IBundleCoverage;
 import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.core.analysis.ICoverageVisitor;
 import org.jacoco.core.analysis.IMethodCoverage;
-import org.jacoco.core.data.ExecFileLoader;
 import org.jacoco.core.data.ExecutionData;
 import org.jacoco.core.data.ExecutionDataStore;
 import org.jacoco.core.data.SessionInfoStore;
@@ -46,6 +45,7 @@ import org.jacoco.core.internal.flow.ClassProbesAdapter;
 import org.jacoco.core.internal.flow.ClassProbesVisitor;
 import org.jacoco.core.internal.flow.MethodProbesVisitor;
 import org.jacoco.core.internal.instr.InstrSupport;
+import org.jacoco.core.tools.ExecFileLoader;
 import org.jacoco.maven.FileFilter;
 import org.jacoco.report.FileMultiReportOutput;
 import org.jacoco.report.IReportGroupVisitor;
@@ -58,6 +58,8 @@ import org.jacoco.report.xml.XMLFormatter;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
+
+import static org.objectweb.asm.ClassReader.EXPAND_FRAMES;
 
 /**
  * Creates a code coverage report for a single project in multiple formats (HTML, XML, and CSV).
@@ -405,7 +407,7 @@ public class ReportMojo extends AbstractMavenReport {
         @Override
         public void analyzeClass(final ClassReader reader) {
             final ClassVisitor visitor = createSanitizingVisitor(CRC64.checksum(reader.b));
-            reader.accept(visitor, 0);
+            reader.accept(visitor, EXPAND_FRAMES);
         }
 
         private ClassVisitor createSanitizingVisitor(final long classid) {
@@ -414,7 +416,7 @@ public class ReportMojo extends AbstractMavenReport {
             final StringPool stringPool = new StringPool();
             final ClassProbesVisitor analyzer = new SanitizingClassAnalyzer(classid, probes, stringPool, coverageVisitor,
                     filter);
-            return new ClassProbesAdapter(analyzer);
+            return new ClassProbesAdapter(analyzer, true);
         }
     }
 
@@ -488,7 +490,7 @@ public class ReportMojo extends AbstractMavenReport {
 
         private SanitizingClassAnalyzer(final long classid, final boolean[] probes, final StringPool stringPool,
                 final ICoverageVisitor coverageVisitor, final MethodCoverageFilter filter) {
-            super(classid, probes, stringPool);
+            super(classid, true, probes, stringPool);
             this.stringPool = stringPool;
             this.probes = probes;
             this.coverageVisitor = coverageVisitor;
