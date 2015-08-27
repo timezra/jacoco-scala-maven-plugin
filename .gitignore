@@ -3,3 +3,7 @@
 .cache
 .settings/
 target/
+
+### for IntelliJ ###
+.idea/
+**/*.iml
