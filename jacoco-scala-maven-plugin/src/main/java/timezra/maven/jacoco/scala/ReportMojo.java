@@ -19,13 +19,16 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 import org.apache.maven.doxia.siterenderer.Renderer;
 import org.apache.maven.plugin.MojoExecutionException;
+import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.project.MavenProject;
 import org.apache.maven.reporting.AbstractMavenReport;
 import org.apache.maven.reporting.MavenReportException;
@@ -34,17 +37,16 @@ import org.jacoco.core.analysis.IBundleCoverage;
 import org.jacoco.core.analysis.ICoverageNode;
 import org.jacoco.core.analysis.ICoverageVisitor;
 import org.jacoco.core.analysis.IMethodCoverage;
-import org.jacoco.core.data.ExecFileLoader;
+import org.jacoco.core.tools.ExecFileLoader;
 import org.jacoco.core.data.ExecutionData;
 import org.jacoco.core.data.ExecutionDataStore;
 import org.jacoco.core.data.SessionInfoStore;
 import org.jacoco.core.internal.analysis.ClassAnalyzer;
-import org.jacoco.core.internal.analysis.MethodAnalyzer;
+import org.jacoco.core.internal.analysis.ClassCoverageImpl;
 import org.jacoco.core.internal.analysis.StringPool;
 import org.jacoco.core.internal.data.CRC64;
 import org.jacoco.core.internal.flow.ClassProbesAdapter;
 import org.jacoco.core.internal.flow.ClassProbesVisitor;
-import org.jacoco.core.internal.flow.MethodProbesVisitor;
 import org.jacoco.core.internal.instr.InstrSupport;
 import org.jacoco.maven.FileFilter;
 import org.jacoco.report.FileMultiReportOutput;
@@ -68,6 +70,8 @@ import org.objectweb.asm.Opcodes;
  * @threadSafe
  */
 public class ReportMojo extends AbstractMavenReport {
+
+    private static Log log;
 
     private static final String FILTER_SCALAC_MIXIN = "SCALAC.MIXIN";
     private static final String FILTER_SCALAC_CASE = "SCALAC.CASE";
@@ -205,6 +209,8 @@ public class ReportMojo extends AbstractMavenReport {
         return excludes;
     }
 
+    public ReportMojo() { log = getLog(); }
+
     @Override
     public void setReportOutputDirectory(final File reportOutputDirectory) {
         if (reportOutputDirectory != null && !reportOutputDirectory.getAbsolutePath().endsWith("jacoco")) {
@@ -272,6 +278,7 @@ public class ReportMojo extends AbstractMavenReport {
     }
 
     private BundleCreator createBundleCreator() {
+        log.debug("createBundleCreator: entered; filters=" + String.join(",", filters));
         final FileFilter fileFilter = new FileFilter(getIncludes(), getExcludes());
         if (filters != null) {
             final Collection<MethodCoverageFilter> methodCoverageFilters = new ArrayList<>();
@@ -403,19 +410,45 @@ public class ReportMojo extends AbstractMavenReport {
         }
 
         @Override
-        public void analyzeClass(final ClassReader reader) {
-            final ClassVisitor visitor = createSanitizingVisitor(CRC64.checksum(reader.b));
+        public void analyzeClass(byte[] source, String location) {
+            final long classId = CRC64.classId(source);
+            final ClassReader reader = InstrSupport.classReaderFor(source);
+            if ((reader.getAccess() & Opcodes.ACC_MODULE) != 0) {
+                return;
+            }
+            if ((reader.getAccess() & Opcodes.ACC_SYNTHETIC) != 0) {
+                return;
+            }
+            final ClassVisitor visitor = createSanitizingVisitor(classId, reader.getClassName());
             reader.accept(visitor, 0);
         }
 
-        private ClassVisitor createSanitizingVisitor(final long classid) {
+        private ClassVisitor createSanitizingVisitor(final long classid, final String className) {
             final ExecutionData data = executionData.get(classid);
-            final boolean[] probes = data == null ? null : data.getProbes();
+            final boolean[] probes;
+            final boolean noMatch;
+            if (data == null) {
+                probes = null;
+                noMatch = executionData.contains(className);
+            } else {
+                probes = data.getProbes();
+                noMatch = false;
+            }
+            final ScalaFilteredClassCoverageImpl coverage = new ScalaFilteredClassCoverageImpl(className, classid, noMatch);
             final StringPool stringPool = new StringPool();
-            final ClassProbesVisitor analyzer = new SanitizingClassAnalyzer(classid, probes, stringPool, coverageVisitor,
-                    filter);
-            return new ClassProbesAdapter(analyzer);
+            final ClassProbesVisitor analyzer = new SanitizingClassAnalyzer(coverage, probes, stringPool, coverageVisitor);
+            // final ClassProbesVisitor analyzer = new ClassAnalyzer(coverage, probes, stringPool);
+            return new ClassProbesAdapter(analyzer, false);
         }
+    }
+
+    static public String imethcovstr(IMethodCoverage cov) {
+        return String.format("%s:%d-%d", cov.getName(), cov.getFirstLine(), cov.getLastLine());
+    }
+
+    static public String classcovstr(ClassCoverageImpl cov) {
+        return String.format("%s:%s:%d-%d", cov.getSourceFileName(), cov.getName(),
+                cov.getFirstLine(), cov.getLastLine());
     }
 
     private static interface MethodCoverageFilter {
@@ -451,8 +484,10 @@ public class ReportMojo extends AbstractMavenReport {
                 }
             }
             for (final IMethodCoverage methodCoverage : methodCoverages) {
+                log.debug("MixinFilter.filter: processing " + imethcovstr(methodCoverage));
                 if (isConstructor(methodCoverage)
                         || !constructorLines.contains(Integer.valueOf(methodCoverage.getFirstLine()))) {
+                    log.debug("MixinFilter.filter: returning " + imethcovstr(methodCoverage));
                     filtered.add(methodCoverage);
                 }
             }
@@ -469,9 +504,11 @@ public class ReportMojo extends AbstractMavenReport {
         public Collection<IMethodCoverage> filter(final Collection<IMethodCoverage> methodCoverages) {
             final Collection<IMethodCoverage> filtered = new ArrayList<>();
             for (final IMethodCoverage methodCoverage : methodCoverages) {
+                log.debug("CaseFilter.filter: processing " + imethcovstr(methodCoverage));
                 final String methodSignature = methodCoverage.getName() + methodCoverage.getDesc();
                 if (!(methodSignature.startsWith("curried()") || methodSignature.startsWith("tupled()") || methodSignature
                         .matches("(?:\\w|\\$)+\\$default\\$\\d+\\(\\).*"))) {
+                    log.debug("CaseFilter.filter: returning " + imethcovstr(methodCoverage));
                     filtered.add(methodCoverage);
                 }
             }
@@ -479,62 +516,71 @@ public class ReportMojo extends AbstractMavenReport {
         }
     }
 
-    private static final class SanitizingClassAnalyzer extends ClassAnalyzer {
-        private final StringPool stringPool;
-        private final boolean[] probes;
-        private final Collection<IMethodCoverage> methodCoveragesToAdd = new ArrayList<IMethodCoverage>();
-        private final ICoverageVisitor coverageVisitor;
-        private final MethodCoverageFilter filter;
+    static final Set<String> scalaSyntheticMethods = new HashSet<>(Arrays.asList(
+        "apply",
+        "canEqual",
+        "copy",
+        "equals",
+        "hashCode",
+        "productArity",
+        "productPrefix",
+        "productElement",
+        "productIterator",
+        "productElementName",
+        "productElementNames",
+        "toString",
+        "unapply"));
 
-        private SanitizingClassAnalyzer(final long classid, final boolean[] probes, final StringPool stringPool,
-                final ICoverageVisitor coverageVisitor, final MethodCoverageFilter filter) {
-            super(classid, probes, stringPool);
-            this.stringPool = stringPool;
-            this.probes = probes;
-            this.coverageVisitor = coverageVisitor;
-            this.filter = filter;
-        }
+    private static class ScalaFilteredClassCoverageImpl extends ClassCoverageImpl {
+        private int tempFirstLine = -1;
+        private final List<IMethodCoverage> methodsSeen = new ArrayList<IMethodCoverage>();
+
+        public ScalaFilteredClassCoverageImpl(String arg1, long arg2, boolean arg3) { super(arg1, arg2, arg3); }
 
         @Override
-        public MethodProbesVisitor visitMethod(final int access, final String name, final String desc,
-                final String signature, final String[] exceptions) {
-
-            InstrSupport.assertNotInstrumented(name, getCoverage().getName());
-
-            // TODO: Use filter hook
-            if ((access & Opcodes.ACC_SYNTHETIC) != 0) {
-                return null;
+        public void addMethod(final IMethodCoverage method) {
+            log.debug(String.format("SFCCI.addMethod: %s %s", classcovstr(this), imethcovstr(method)));
+            if ((method.getFirstLine() > 0) && (method.getInstructionCounter().getTotalCount() > 0) &&
+                ((tempFirstLine < 0) || (method.getFirstLine() < tempFirstLine))) {
+                tempFirstLine = method.getFirstLine();
             }
+            methodsSeen.add(method);
+        }
 
-            return new MethodAnalyzer(stringPool.get(name), stringPool.get(desc), stringPool.get(signature), probes) {
-                @Override
-                public void visitEnd() {
-                    super.visitEnd();
-                    final IMethodCoverage methodCoverage = getCoverage();
-                    if (methodCoverage.getInstructionCounter().getTotalCount() > 0) {
-                        // Only consider methods that actually contain
-                        // code
-                        methodCoveragesToAdd.add(methodCoverage);
-                    }
+        public void addFilteredMethodsForReal() {
+            for (IMethodCoverage method : methodsSeen) {
+                if ((method.getInstructionCounter().getTotalCount() <= 0) ||
+                    (isScalaSource() && scalaSyntheticMethods.contains(method.getName()) &&
+                     method.getFirstLine() <= tempFirstLine &&
+                     method.getLastLine() <= tempFirstLine)) {
+                    continue;
                 }
-            };
+                log.debug(String.format("SFCCI.addFilteredMethodsForReal: %s %s", classcovstr(this), imethcovstr(method)));
+                super.addMethod(method);
+            }
+        }
+
+        private boolean isScalaSource() {
+            return getSourceFileName().endsWith(".scala");
+        }
+    }
+
+    private static final class SanitizingClassAnalyzer extends ClassAnalyzer {
+        private final ScalaFilteredClassCoverageImpl coverageToVisit;
+        private final ICoverageVisitor coverageVisitor;
+
+        private SanitizingClassAnalyzer(final ScalaFilteredClassCoverageImpl coverage, final boolean[] probes,
+            final StringPool stringPool, final ICoverageVisitor coverageVisitor) {
+            super(coverage, probes, stringPool);
+            this.coverageToVisit = coverage;
+            this.coverageVisitor = coverageVisitor;
         }
 
         @Override
         public void visitEnd() {
-            try {
-                visitSanitizedMethods();
-            } finally {
-                super.visitEnd();
-                coverageVisitor.visitCoverage(getCoverage());
-            }
-        }
-
-        private void visitSanitizedMethods() {
-            final Collection<IMethodCoverage> filtered = filter.filter(methodCoveragesToAdd);
-            for (final IMethodCoverage methodCoverage : filtered) {
-                getCoverage().addMethod(methodCoverage);
-            }
+            coverageToVisit.addFilteredMethodsForReal();
+            super.visitEnd();
+            coverageVisitor.visitCoverage(coverageToVisit);
         }
     }
 }

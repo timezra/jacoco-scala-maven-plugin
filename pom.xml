@@ -4,7 +4,7 @@
     <groupId>timezra.maven</groupId>
     <artifactId>jacoco-scala-maven-plugin-aggregator</artifactId>
     <packaging>pom</packaging>
-    <version>0.6.3.2-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>JaCoCo Scala Maven Plugin Aggregator</name>
     <url>https://github.com/timezra/jacoco-scala-maven-plugin</url>
 
@@ -52,7 +52,7 @@
     <modules>
         <module>jacoco-scala-maven-plugin</module>
         <module>jacoco-scala-maven-plugin-acceptance-tests</module>
-        <module>jacoco-scalatest-maven-plugin-example</module>
+        <module>jacoco-scala-raft-example</module>
     </modules>
 
 </project>

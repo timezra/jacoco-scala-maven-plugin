@@ -1,10 +1,11 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>timezra.maven</groupId>
     <artifactId>jacoco-scala-maven-plugin</artifactId>
     <packaging>maven-plugin</packaging>
-    <version>0.6.3.2-SNAPSHOT</version>
+    <version>1.0.0-SNAPSHOT</version>
     <name>JaCoCo Scala Maven Plugin</name>
     <url>https://github.com/timezra/jacoco-scala-maven-plugin</url>
 
@@ -47,6 +48,8 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <doxiaVersion>1.10</doxiaVersion>
+        <doxiaSitetoolsVersion>1.10</doxiaSitetoolsVersion>
     </properties>
 
     <build>
@@ -54,16 +57,14 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.1</version>
+                <version>3.12.1</version>
                 <configuration>
-                    <source>1.7</source>
-                    <target>1.7</target>
                 </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-plugin-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.11.0</version>
                 <configuration>
                     <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
                 </configuration>
@@ -85,7 +86,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
+                <version>3.3.0</version>
                 <executions>
                     <execution>
                         <id>attach-sources</id>
@@ -98,7 +99,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
+                <version>3.6.3</version>
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
@@ -109,6 +110,33 @@
                 </executions>
                 <configuration>
                     <show>public</show>
+                    <tags>
+                        <tag>
+                            <name>goal</name>
+                            <placement>a</placement>
+                            <head>Goal:</head>
+                        </tag>
+                        <tag>
+                            <name>phase</name>
+                            <placement>a</placement>
+                            <head>Phase:</head>
+                        </tag>
+                        <tag>
+                            <name>threadSafe</name>
+                            <placement>a</placement>
+                            <head>Thread Safe:</head>
+                        </tag>
+                        <tag>
+                            <name>requiresDependencyResolution</name>
+                            <placement>a</placement>
+                            <head>Requires Dependency Resolution:</head>
+                        </tag>
+                        <tag>
+                            <name>requiresProject</name>
+                            <placement>a</placement>
+                            <head>Requires Project:</head>
+                        </tag>
+                    </tags>
                 </configuration>
             </plugin>
         </plugins>
@@ -116,9 +144,14 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-core</artifactId>
+            <version>3.9.6</version>
+        </dependency>
+        <dependency>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
-            <version>0.6.3.201306030806</version>
+            <version>0.8.11</version>
         </dependency>
         <dependency>
             <groupId>junit</groupId>
@@ -131,6 +164,55 @@
             <artifactId>mockito-core</artifactId>
             <version>1.9.5</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- Doxia API and Doxia Sitetools -->
+        <dependency>
+            <groupId>org.apache.maven.doxia</groupId>
+            <artifactId>doxia-sink-api</artifactId>
+            <version>${doxiaVersion}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.doxia</groupId>
+            <artifactId>doxia-site-renderer</artifactId>
+            <version>${doxiaSitetoolsVersion}</version>
+        </dependency>
+
+        <!-- reporting API -->
+        <dependency>
+            <groupId>org.apache.maven.reporting</groupId>
+            <artifactId>maven-reporting-impl</artifactId>
+            <version>3.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.reporting</groupId>
+            <artifactId>maven-reporting-api</artifactId>
+            <version>3.0</version>
+        </dependency>
+
+        <!-- plugin API and plugin-tools -->
+        <dependency>
+            <groupId>org.apache.maven</groupId>
+            <artifactId>maven-plugin-api</artifactId>
+            <version>3.5.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.plugin-tools</groupId>
+            <artifactId>maven-plugin-annotations</artifactId>
+            <version>3.10.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.maven.shared</groupId>
+            <artifactId>maven-shared-utils</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-site-plugin</artifactId>
+            <version>3.7</version>
         </dependency>
     </dependencies>
 </project>
