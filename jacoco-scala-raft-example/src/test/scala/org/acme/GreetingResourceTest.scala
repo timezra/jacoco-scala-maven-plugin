@@ -25,4 +25,13 @@ class GreetingResourceTest {
              .statusCode(200)
              .body(`is`("hello marcus"))
     }
+
+    @Test
+    def testCompareEndpoint(): Unit = {
+        given()
+          .`when`().get("/hello/compare/greeting")
+          .then()
+             .statusCode(200)
+             .body(`is`("let's compare to greeting, ok?"))
+    }
 }

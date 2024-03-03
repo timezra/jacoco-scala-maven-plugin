@@ -1,8 +1,8 @@
 package org.acme
 
-case class CompareService() {
+case class CompareService() extends EndPhrases[String] {
     def comparing(name: String) = {
-        "let's compare " + name;
+        "let's compare to " + name + ok();
     }
     override def toString(): String = {
         var rval = "do some reflection magic here"
@@ -11,4 +11,7 @@ case class CompareService() {
         rval += "string 3"
         return rval
     }
+
+    override def ok(): String = ", ok?"
+    override def realquick(): String = ", real quick!"
 }

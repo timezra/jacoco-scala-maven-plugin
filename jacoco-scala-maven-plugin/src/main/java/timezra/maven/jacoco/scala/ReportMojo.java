@@ -278,21 +278,19 @@ public class ReportMojo extends AbstractMavenReport {
     }
 
     private BundleCreator createBundleCreator() {
-        log.debug("createBundleCreator: entered; filters=" + String.join(",", filters));
+        log.debug("createBundleCreator: entered; filters=" + 
+            (filters == null ? "null" : String.join(",", filters)));
         final FileFilter fileFilter = new FileFilter(getIncludes(), getExcludes());
+        final Collection<MethodCoverageFilter> methodCoverageFilters = new ArrayList<>();
         if (filters != null) {
-            final Collection<MethodCoverageFilter> methodCoverageFilters = new ArrayList<>();
             if (filters.contains(FILTER_SCALAC_MIXIN)) {
                 methodCoverageFilters.add(new MixinFilter());
             }
             if (filters.contains(FILTER_SCALAC_CASE)) {
                 methodCoverageFilters.add(new CaseFilter());
             }
-            if (!filters.isEmpty()) {
-                return new SanitizingBundleCreator(getProject(), fileFilter, new Filters(methodCoverageFilters));
-            }
         }
-        return new BundleCreator(getProject(), fileFilter);
+        return new SanitizingBundleCreator(getProject(), fileFilter, new Filters(methodCoverageFilters));
     }
 
     private void createReport(final IReportGroupVisitor visitor) throws IOException {
@@ -529,7 +527,8 @@ public class ReportMojo extends AbstractMavenReport {
         "productElementName",
         "productElementNames",
         "toString",
-        "unapply"));
+        "unapply",
+        "writeReplace"));
 
     private static class ScalaFilteredClassCoverageImpl extends ClassCoverageImpl {
         private int tempFirstLine = -1;

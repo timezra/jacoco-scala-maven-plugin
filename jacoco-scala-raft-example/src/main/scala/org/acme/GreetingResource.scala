@@ -20,4 +20,12 @@ class GreetingResource {
         service.greeting(name);
     }
 
+    val service2 = CompareService()
+
+    @GET
+    @Produces(Array[String](MediaType.TEXT_PLAIN))
+    @Path("/compare/{name}")
+    def compare(name: String) = {
+        service2.comparing(name);
+    }
 }
